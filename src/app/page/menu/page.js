@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 const getTopics = async () => {
   try {
-    const res = await fetch("http://localhost:3000/api/mesnu");
+    const res = await fetch("http://localhost:3000/api/menu");
     if (!res.ok) {
       throw new Error("Failed to fetch topics");
     }

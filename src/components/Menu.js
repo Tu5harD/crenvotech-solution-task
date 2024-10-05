@@ -141,7 +141,7 @@ const Menu = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <Link href="/menu" passHref>
+          <Link href="/page/menu" passHref>
             <motion.button
               className="border border-yellow-400 text-yellow-400 hover:bg-yellow-500 hover:text-black text-base font-semibold py-2 px-4 rounded transition duration-300"
               whileHover={{ scale: 1.05 }}

@@ -2,9 +2,8 @@ import connectMongoDB from "@/database/mongodb";
 import Product from "@/models/product";
 import { NextResponse } from "next/server";
 
-export async function getServerSideProps(context) {
+export async function GET() {
+  await connectMongoDB();
   const products = await Product.find();
-  return {
-    props: { products: JSON.parse(JSON.stringify(products)) },
-  };
+  return NextResponse.json({ products });
 }
