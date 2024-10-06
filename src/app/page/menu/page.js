@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
-
+import { motion, AnimatePresence } from "framer-motion";
+import ProductDetailsModal from "@/components/ProductDetailsModal";
 const getTopics = async () => {
   try {
     const res = await fetch("http://localhost:3000/api/menu");
@@ -156,10 +156,11 @@ const Page = () => {
       country: "New York, NY",
     },
   ];
-
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -195,9 +196,13 @@ const Page = () => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  };
+
   const displayItems = products.length > 0 ? products : menuItem;
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -281,10 +286,11 @@ const Page = () => {
           {displayItems.map((item) => (
             <motion.div
               key={item.id}
-              className="bg-gray-800 rounded-lg p-4 relative hover:shadow-xl transition-shadow"
+              className="bg-gray-800 rounded-lg p-4 relative hover:shadow-xl transition-shadow cursor-pointer"
               variants={itemVariants}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => handleProductClick(item)}
             >
               <Image
                 width={500}
@@ -309,7 +315,10 @@ const Page = () => {
                 </span>
                 <motion.button
                   className="border border-yellow-400 text-yellow-400 hover:bg-yellow-500 hover:text-black text-base font-semibold py-2 px-4 rounded transition duration-300"
-                  onClick={() => addToCart(item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addToCart(item);
+                  }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -320,70 +329,81 @@ const Page = () => {
           ))}
         </motion.div>
 
-        {isCartOpen && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex justify-end"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
+        <AnimatePresence>
+          {isProductModalOpen && selectedProduct && (
+            <ProductDetailsModal
+              product={selectedProduct}
+              onClose={() => setIsProductModalOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isCartOpen && (
             <motion.div
-              className="bg-gray-800 w-full max-w-md p-6 overflow-y-auto"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex justify-end z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <h2 className="text-2xl font-semibold mb-4">Your Cart</h2>
-              {cart.length === 0 ? (
-                <p>Your cart is empty</p>
-              ) : (
-                <>
-                  {cart.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      className="flex justify-between items-center mb-4"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                    >
-                      <div>
-                        <h3 className="font-semibold">{item.name}</h3>
-                        <p className="text-sm text-gray-400">
-                          ${item.price} x {item.quantity}
-                        </p>
-                      </div>
-                      <button
-                        className="text-red-500 hover:text-red-400 transition-colors"
-                        onClick={() => removeFromCart(item.id)}
-                      >
-                        Remove
-                      </button>
-                    </motion.div>
-                  ))}
-                  <motion.div
-                    className="mt-4 pt-4 border-t border-gray-700"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <p className="text-xl font-semibold">
-                      Total: ${getTotalPrice().toFixed(2)}
-                    </p>
-                  </motion.div>
-                </>
-              )}
-              <motion.button
-                className="mt-6 w-full bg-yellow-500 text-black py-2 rounded hover:bg-yellow-400 transition-colors"
-                onClick={() => setIsCartOpen(false)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <motion.div
+                className="bg-gray-800 w-full max-w-md p-6 overflow-y-auto"
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
               >
-                Close Cart
-              </motion.button>
+                <h2 className="text-2xl font-semibold mb-4">Your Cart</h2>
+                {cart.length === 0 ? (
+                  <p>Your cart is empty</p>
+                ) : (
+                  <>
+                    {cart.map((item) => (
+                      <motion.div
+                        key={item.id}
+                        className="flex justify-between items-center mb-4"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                      >
+                        <div>
+                          <h3 className="font-semibold">{item.name}</h3>
+                          <p className="text-sm text-gray-400">
+                            ${item.price} x {item.quantity}
+                          </p>
+                        </div>
+                        <button
+                          className="text-red-500 hover:text-red-400 transition-colors"
+                          onClick={() => removeFromCart(item.id)}
+                        >
+                          Remove
+                        </button>
+                      </motion.div>
+                    ))}
+                    <motion.div
+                      className="mt-4 pt-4 border-t border-gray-700"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <p className="text-xl font-semibold">
+                        Total: ${getTotalPrice().toFixed(2)}
+                      </p>
+                    </motion.div>
+                  </>
+                )}
+                <motion.button
+                  className="mt-6 w-full bg-yellow-500 text-black py-2 rounded hover:bg-yellow-400 transition-colors"
+                  onClick={() => setIsCartOpen(false)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Close Cart
+                </motion.button>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
